@@ -1,8 +1,26 @@
-echo "*.pcap
+@'
+# Packet captures and downloaded lab archives
+*.pcap
 *.pcapng
 *.zip
+
+# Executables and libraries
 *.exe
 *.dll
+
+# Extracted or downloaded lab files
 extracted/
-lab-files/" > .gitignore
-touch investigations/web-investigation/.gitkeep investigations/tomcat-takeover/.gitkeep scripts/.gitkeep screenshots/.gitkeep report/.gitkeep
+lab-files/
+
+# Temporary investigation output
+http_requests.txt
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+'@ | Set-Content -Path .gitignore
