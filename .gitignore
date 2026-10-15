@@ -1,0 +1,8 @@
+echo "*.pcap
+*.pcapng
+*.zip
+*.exe
+*.dll
+extracted/
+lab-files/" > .gitignore
+touch investigations/web-investigation/.gitkeep investigations/tomcat-takeover/.gitkeep scripts/.gitkeep screenshots/.gitkeep report/.gitkeep
