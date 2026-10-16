@@ -1,8 +1,11 @@
 # Web Investigation: Findings
 
 Lab: CyberDefenders "Web Investigation" (Network Forensics, Easy)
+
 Evidence: `WebInvestigation.pcap` (not stored in this repo)
+
 Tools: Wireshark, tshark, NetworkMiner, PowerShell, Python, VirusTotal
+
 Commands used: see `commands.md`. Screenshots: see `../../screenshots/`.
 
 ## 1. Objectives
@@ -173,4 +176,3 @@ Script output (`iocs.csv`): 1 domain, 3 IPs, 152 URLs. The three IPs are the att
 
 - Whether the reverse shell ran or connected.
 - How the attacker got the admin credentials.
-- The real location of the attacker (VPNs and proxies can hide it).
