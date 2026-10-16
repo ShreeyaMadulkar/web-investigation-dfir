@@ -1,74 +1,31 @@
 # Web Investigation: Network Forensics of a Web Server Attack
 
-Security project based on the CyberDefenders **Web Investigation** lab (Network Forensics, Easy).
+Security project for based on the CyberDefenders **Web Investigation** lab (Network Forensics, Easy).
+
+**Team:** Shreeya Madulkar, Sweekriti Maheshwari
 
 ## What this project does
 
-We act as a SOC analyst for a fictional online bookstore (BookWorld). We analyse a packet capture (PCAP) to find out how the web server was attacked, what data was exposed, and what the attacker did next.
+We act as a SOC analyst for a fictional online bookstore (BookWorld). An alert reported a spike in database queries and server load. We analyse a packet capture (PCAP) to find out how the web server was attacked, what data was exposed, and what the attacker did next.
+
+## Objectives
+
+1. Identify the attacker and the target.
+2. Find the attack vector (vulnerable page and first SQL injection attempt).
+3. Identify the tools used.
+4. Assess the data exposed.
+5. Check for admin access.
+6. Check for further control (uploaded file, extraction, hash, execution).
+7. Document the incident (timeline, IOCs, MITRE ATT&CK).
+8. Recommend fixes.
 
 ## Attack story
 
-1. **Recon:** Gobuster scans the site for hidden pages (41,527 requests).
-2. **SQL injection:** sqlmap attacks `/search.php` and exposes the `customers` table.
+1. **Recon:** Gobuster scans the site for hidden pages (41,527 requests) and finds /admin/.
+2. **SQL injection:** a first test on /search.php, then sqlmap, exposes the customers table.
 3. **Admin access:** three failed logins, then a successful one.
 4. **Web shell:** a PHP file with reverse-shell code is uploaded.
 5. **Attempted execution:** the file is requested, the server returns HTTP 500, and no reverse connection is seen, so execution is not confirmed.
-
-## Tools
-
-| Tool | Use |
-|---|---|
-| Wireshark | Packet analysis, filters, Follow Stream, Statistics, I/O Graph |
-| tshark | Command line export of HTTP requests |
-| NetworkMiner | File and credential extraction from the PCAP |
-| Python 3 | IOC extraction script |
-| VirusTotal (browser) | Hash lookup |
-
-## Repository structure
-
-```
-web-investigation-dfir/
-├── README.md
-├── .gitignore
-├── investigations/web-investigation/
-│   ├── notes.md        Findings, timeline, IOCs, MITRE mapping
-│   └── iocs.csv        Output of the script
-├── scripts/extract_iocs.py
-├── screenshots/        Evidence screenshots
-└── report/             Final report
-```
-
-The PCAP, extracted malware and lab zip are **not** included.
-
-## How to reproduce
-
-1. Download the lab files from CyberDefenders and unzip them (password: `cyberdefenders.org`).
-2. Open `WebInvestigation.pcap` in Wireshark.
-3. Use these steps and filters:
-
-| Step | Wireshark action or filter |
-|---|---|
-| Overview | Statistics > Conversations, Protocol Hierarchy, Endpoints |
-| HTTP requests | Statistics > HTTP > Requests |
-| Normal user | `ip.addr == 170.40.150.126 && http.request` |
-| SQL injection | `ip.src == 111.224.250.131 && http.request.uri contains "UNION"` then Follow > HTTP Stream |
-| Server responses | `ip.src == 73.124.22.98 && ip.dst == 111.224.250.131 && http.response` |
-| Logins and upload | `ip.src == 111.224.250.131 && http.request.method == "POST"` |
-| Uploaded file | `http.request.uri contains "NVri2vhp.php"` |
-| Reverse shell check | `ip.addr == 111.224.250.131 && tcp.port == 443` |
-
-4. Tools by User-Agent (PowerShell):
-
-```
-& "C:\Program Files\Wireshark\tshark.exe" -r WebInvestigation.pcap -Y "http.request" -T fields -e ip.src -e http.user_agent | Group-Object | Sort-Object Count -Descending
-```
-
-5. Export requests and run the IOC script (Gobuster lines left out):
-
-```
-& "C:\Program Files\Wireshark\tshark.exe" -r WebInvestigation.pcap -Y 'http.request && !(http.user_agent contains "gobuster")' -T fields -e frame.time_utc -e ip.src -e ip.dst -e http.user_agent -e http.request.full_uri > http_requests.txt
-python scripts/extract_iocs.py http_requests.txt investigations/web-investigation/iocs.csv --case web-investigation
-```
 
 ## Key findings
 
@@ -78,8 +35,42 @@ python scripts/extract_iocs.py http_requests.txt investigations/web-investigatio
 | Victim server | 73.124.22.98 (bookworldstore.com) |
 | Scanner | Gobuster 3.6 |
 | Injection tool | sqlmap 1.8.3 |
-| Data exposed | `bookworld_db.customers` |
-| Malicious file | `NVri2vhp.php` |
+| Data exposed | bookworld_db.customers |
+| Malicious file | NVri2vhp.php (VirusTotal: 1 of 62 vendors flag it) |
 | Reverse shell | Not confirmed |
 
-Full details are in `investigations/web-investigation/notes.md` and the report.
+## Tools
+
+| Tool | Use |
+|---|---|
+| Wireshark | Statistics, display filters, Follow Stream, I/O Graph |
+| tshark | Command line export and User-Agent grouping |
+| NetworkMiner | Finding and extracting the uploaded file |
+| PowerShell | Get-FileHash, checking the script output |
+| Python 3 | IOC extraction script |
+| VirusTotal, IPinfo | Hash lookup, IP location (browser) |
+
+## Repository structure
+
+web-investigation-dfir/
+├── README.md
+├── .gitignore
+├── investigations/web-investigation/
+│   ├── notes.md        Findings, timeline, IOCs, MITRE mapping, fixes
+│   ├── commands.md     Every filter and command we used
+│   └── iocs.csv        Output of the script
+├── scripts/extract_iocs.py
+├── screenshots/        26 evidence screenshots
+└── report/             Final report
+
+The PCAP, the extracted file and the lab zip are **not** included.
+
+## How to reproduce
+
+1. Download the lab files from CyberDefenders and unzip them (password: cyberdefenders.org).
+2. Open WebInvestigation.pcap in Wireshark.
+3. Follow investigations/web-investigation/commands.md. It has each filter, the tshark commands, the NetworkMiner steps and the hashing step.
+4. Run the script:
+
+powershell
+python scripts\extract_iocs.py http_requests.txt investigations\web-investigation\iocs.csv --case web-investigation
